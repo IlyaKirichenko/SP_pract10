@@ -12,7 +12,7 @@ volatile bool run = true;
 DWORD WINAPI IncrementThread(LPVOID lp) {
 	while (run) {
 		countInc++;
-		Sleep(500);
+		Sleep(10);
 	}
 	return 0;
 }
@@ -27,7 +27,7 @@ DWORD WINAPI FibonachiThread(LPVOID lp) {
 			f1 = tmp;
 		}
 		countFib++;
-		Sleep(500);
+		Sleep(10);
 	}
 	return 0;
 }
@@ -39,61 +39,57 @@ DWORD WINAPI FactorialThread(LPVOID lp) {
 			a *= i;
 		}
 		countFact++;
-		Sleep(500);
+		Sleep(10);
 	}
 	return 0;
-}
-void ShowStats() {
-	int startInc = countInc;
-	int startFib = countFib;
-	int startFact = countFact;
-
-	int incDone = countInc - startInc;
-	int fibDone = countFib - startFib;
-	int factDone = countFact - startFact;
-
-	cout << "IncrementThread: " << incDone << " итераций\n";
-	cout << "FibonachiThread: " << fibDone << " итераций\n";
-	cout << "FactorialThread: " << factDone << " итераций\n";
 }
 
 HANDLE hThreadInc = NULL;
 HANDLE hThreadFib = NULL;
 HANDLE hThreadFact = NULL;
+
 int main()
 {
 	hThreadInc = CreateThread(NULL, 0, IncrementThread, NULL, 0, NULL);
 	if (!SetHandleInformation(hThreadInc, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-		cout << "The inhentance is not change\n";
+		cout << "The thread is not change\n";
 		_getch();
 		return GetLastError();
 	}
 	hThreadFib = CreateThread(NULL, 0, FibonachiThread, NULL, 0, NULL);
 	if (!SetHandleInformation(hThreadFib, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-		cout << "The inhentance is not change\n";
+		cout << "The thread is not change\n";
 		_getch();
 		return GetLastError();
 	}
 	hThreadFact = CreateThread(NULL, 0, FactorialThread, NULL, 0, NULL);
 	if (!SetHandleInformation(hThreadFact, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT)) {
-		cout << "The inhentance is not change\n";
+		cout << "The thread is not change\n";
 		_getch();
 		return GetLastError();
 	}
-	SetThreadPriority(hThreadInc, THREAD_PRIORITY_BELOW_NORMAL);
+	SetThreadPriority(hThreadInc, THREAD_PRIORITY_LOWEST);
 	SetThreadPriority(hThreadFib, THREAD_PRIORITY_NORMAL);
-	SetThreadPriority(hThreadFact, THREAD_PRIORITY_ABOVE_NORMAL);
+	SetThreadPriority(hThreadFact, THREAD_PRIORITY_HIGHEST);
 
-	cout << "  1 — изменить приоритет IncrementThread\n";
-	cout << "  2 — изменить приоритет FibonachiThread\n";
-	cout << "  3 — изменить приоритет FactorialThread\n";
-	cout << "  q — выход\n";
+	
+
 
 	while (run) {
+		system("cls");
+		cout << "  1 - change IncrementThread\n";
+		cout << "  2 - change FibonachiThread\n";
+		cout << "  3 - change FactorialThread\n";
+		cout << "  q - exit\n";
+			cout << "IncrementThread: " << countInc << "\n";
+			cout << "FibonachiThread: " << countFib << "\n";
+			cout << "FactorialThread: " << countFact << "\n";
+			//ShowStats();
+			Sleep(1000);
 		if (_kbhit()) {
 			char key = _getch();
 			if (key == '1' || key == '2' || key == '3') {
-				cout << "\nНовый приоритет (0-5): ";
+				cout << "\nNew (0-5): ";
 				char p = _getch();
 				cout << p << endl;
 
@@ -121,15 +117,18 @@ int main()
 				}
 
 				if (key == '1') {
-					SetThreadPriority(hThreadInc, priority);
+					GetThreadPriorityBoost(hThreadInc,&priority);
+					SetThreadPriorityBoost(hThreadInc, priority);
 				}
 				else if (key == '2') {
-					SetThreadPriority(hThreadFib, priority);
+					GetThreadPriorityBoost(hThreadFib, &priority);
+					SetThreadPriorityBoost(hThreadFib, priority);
 				}
 				else if (key == '3') {
-					SetThreadPriority(hThreadFact, priority);
+					GetThreadPriorityBoost(hThreadFact, &priority);
+					SetThreadPriorityBoost(hThreadFact, priority);
 				}
-				ShowStats();
+				//ShowStats();
 			}
 			else if (key == 'q') {
 				run = false;
@@ -141,5 +140,7 @@ int main()
 			}
 		}
 		Sleep(10);
-	}		
+	}
 }
+
+
