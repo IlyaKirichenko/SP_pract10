@@ -12,7 +12,6 @@ volatile bool run = true;
 DWORD WINAPI IncrementThread(LPVOID lp) {
 	while (run) {
 		countInc++;
-		Sleep(10);
 	}
 	return 0;
 }
@@ -45,12 +44,18 @@ DWORD WINAPI FactorialThread(LPVOID lp) {
 volatile int countStress = 0;
 DWORD WINAPI StressThread(LPVOID lp) {
 	volatile int a = 1;
+	bool priorityChanged = false;
 	while (run) {
 		int a = 1;
 		for (int i = 0; i <= 5000; i++) {
 			a = a * 3 + 1;
 		}
 		countStress++;
+		Sleep(1);
+		if (countStress >= 1000 && !priorityChanged) {
+			SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+			priorityChanged = true;
+		}
 	}
 	return 0;
 }
@@ -97,9 +102,15 @@ int main()
 		cout << "IncrementThread: " << countInc << "| "<< "Priority: " << GetThreadPriority(hThreadInc) << "\n";
 		cout << "FibonachiThread: " << countFib << "| " << "Priority: " << GetThreadPriority(hThreadFib) << "\n";
 		cout << "FactorialThread: " << countFact << "| " << "Priority: " << GetThreadPriority(hThreadFact) << "\n";
-		cout << "StressThread: " << "Priority: " << GetThreadPriority(hStress) << "\n";
+		cout << "StressThread: ";
+		if (hStress != NULL && hStress != INVALID_HANDLE_VALUE) {
+			cout << countStress << " | Proirity: " << GetThreadPriority(hStress);
+		}
+		else {
+			cout << "Not running";
+		}
+		cout << "\n";
 
-		//ShowStats();
 		Sleep(1000);
 		if (_kbhit()) {
 			char key = _getch();
@@ -143,18 +154,18 @@ int main()
 				
 					SetThreadPriority(hThreadFact, priority);
 				}
-				else if (key == 's') {
+				
+				}else if (key == 's') {
 					if (hStress == NULL || WaitForSingleObject(hStress, 0) == WAIT_OBJECT_0) {
 						hStress = CreateThread(NULL, 0, StressThread, NULL, 0, NULL);
 						SetThreadPriority(hStress, THREAD_PRIORITY_HIGHEST);
 						cout << "Stress start\n";
 					}
-				}
 			}
 			else if (key == 'q') {
 				run = false;
 				Sleep(100);
-				CloseHandle(hStress);
+				if (hStress) CloseHandle(hStress);
 				CloseHandle(hThreadInc);
 				CloseHandle(hThreadFib);
 				CloseHandle(hThreadFact);
