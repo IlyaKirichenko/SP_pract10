@@ -159,7 +159,6 @@ int main()
 					if (hStress == NULL || WaitForSingleObject(hStress, 0) == WAIT_OBJECT_0) {
 						hStress = CreateThread(NULL, 0, StressThread, NULL, 0, NULL);
 						SetThreadPriority(hStress, THREAD_PRIORITY_HIGHEST);
-						cout << "Stress start\n";
 					}
 			}
 			else if (key == 'q') {
