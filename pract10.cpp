@@ -27,7 +27,6 @@ DWORD WINAPI FibonachiThread(LPVOID lp) {
 			f1 = tmp;
 		}
 		countFib++;
-		Sleep(10);
 	}
 	return 0;
 }
@@ -39,7 +38,19 @@ DWORD WINAPI FactorialThread(LPVOID lp) {
 			a *= i;
 		}
 		countFact++;
-		Sleep(10);
+	}
+	return 0;
+}
+
+volatile int countStress = 0;
+DWORD WINAPI StressThread(LPVOID lp) {
+	volatile int a = 1;
+	while (run) {
+		int a = 1;
+		for (int i = 0; i <= 5000; i++) {
+			a = a * 3 + 1;
+		}
+		countStress++;
 	}
 	return 0;
 }
@@ -47,6 +58,7 @@ DWORD WINAPI FactorialThread(LPVOID lp) {
 HANDLE hThreadInc = NULL;
 HANDLE hThreadFib = NULL;
 HANDLE hThreadFact = NULL;
+HANDLE hStress = NULL;
 
 int main()
 {
@@ -72,7 +84,7 @@ int main()
 	SetThreadPriority(hThreadFib, THREAD_PRIORITY_NORMAL);
 	SetThreadPriority(hThreadFact, THREAD_PRIORITY_HIGHEST);
 
-	
+
 
 
 	while (run) {
@@ -80,12 +92,15 @@ int main()
 		cout << "  1 - change IncrementThread\n";
 		cout << "  2 - change FibonachiThread\n";
 		cout << "  3 - change FactorialThread\n";
+		cout << "  s - start StressThread\n";
 		cout << "  q - exit\n";
-			cout << "IncrementThread: " << countInc << "\n";
-			cout << "FibonachiThread: " << countFib << "\n";
-			cout << "FactorialThread: " << countFact << "\n";
-			//ShowStats();
-			Sleep(1000);
+		cout << "IncrementThread: " << countInc << "| "<< "Priority: " << GetThreadPriority(hThreadInc) << "\n";
+		cout << "FibonachiThread: " << countFib << "| " << "Priority: " << GetThreadPriority(hThreadFib) << "\n";
+		cout << "FactorialThread: " << countFact << "| " << "Priority: " << GetThreadPriority(hThreadFact) << "\n";
+		cout << "StressThread: " << "Priority: " << GetThreadPriority(hStress) << "\n";
+
+		//ShowStats();
+		Sleep(1000);
 		if (_kbhit()) {
 			char key = _getch();
 			if (key == '1' || key == '2' || key == '3') {
@@ -117,22 +132,29 @@ int main()
 				}
 
 				if (key == '1') {
-					GetThreadPriorityBoost(hThreadInc,&priority);
-					SetThreadPriorityBoost(hThreadInc, priority);
+					
+					SetThreadPriority(hThreadInc, priority);
 				}
 				else if (key == '2') {
-					GetThreadPriorityBoost(hThreadFib, &priority);
-					SetThreadPriorityBoost(hThreadFib, priority);
+					
+					SetThreadPriority(hThreadFib, priority);
 				}
 				else if (key == '3') {
-					GetThreadPriorityBoost(hThreadFact, &priority);
-					SetThreadPriorityBoost(hThreadFact, priority);
+				
+					SetThreadPriority(hThreadFact, priority);
 				}
-				//ShowStats();
+				else if (key == 's') {
+					if (hStress == NULL || WaitForSingleObject(hStress, 0) == WAIT_OBJECT_0) {
+						hStress = CreateThread(NULL, 0, StressThread, NULL, 0, NULL);
+						SetThreadPriority(hStress, THREAD_PRIORITY_HIGHEST);
+						cout << "Stress start\n";
+					}
+				}
 			}
 			else if (key == 'q') {
 				run = false;
 				Sleep(100);
+				CloseHandle(hStress);
 				CloseHandle(hThreadInc);
 				CloseHandle(hThreadFib);
 				CloseHandle(hThreadFact);
@@ -142,5 +164,4 @@ int main()
 		Sleep(10);
 	}
 }
-
 
